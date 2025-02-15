@@ -53,7 +53,7 @@ valid_loader = DataLoader(dataset_valid, batch_size=test_batch_size, shuffle=Tru
 
 
 if __name__ == "__main__":
-    print(torch.__version__)
-    print(torch.cuda.is_available())
-    print(torchvision.__version__)
-    print(f'\n{train_size / train_batch_size}, {valid_size / test_batch_size}')
+    print('torch version: ' + torch.__version__)
+    print('torchvision version: ' + torchvision.__version__)
+    print('if cuda available: ' + str(torch.cuda.is_available()))
+    print(f'number of batch: {train_size / train_batch_size}')

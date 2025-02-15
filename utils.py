@@ -1,8 +1,11 @@
 import torch  
-import matplotlib  
+import matplotlib
+import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 matplotlib.style.use('ggplot')  
+
 def save_model(epochs, model, optimizer, criterion):  
     """
     Save the trained model to disk.  
@@ -16,7 +19,7 @@ def save_model(epochs, model, optimizer, criterion):
         'loss': criterion,  
         }, 'outputs/model.pth')
 
-def save_plots(train_acc, valid_acc, train_loss, valid_loss):  
+def save_acc(train_acc, valid_acc, train_loss, valid_loss):  
     """
     Save the loss and accuracy plots to disk.  
     """
@@ -49,3 +52,21 @@ def save_plots(train_acc, valid_acc, train_loss, valid_loss):
     plt.ylabel('Loss')
     plt.legend()
     plt.savefig('outputs/loss.png')
+
+def save_matrix(true_labels, pred_labels, class_names):
+    """
+    Save the confusion matrix.
+    """
+    filename='outputs/confusion_matrix.png'
+    cm = confusion_matrix(true_labels, pred_labels)
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(cm, annot=True, fmt='d', 
+                xticklabels=class_names, 
+                yticklabels=class_names,
+                cmap='Blues')
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title('Confusion Matrix')
+    plt.savefig(filename)
+    plt.close()
+    print(f"Confusion matrix saved to {filename}")

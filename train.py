@@ -4,9 +4,11 @@ import torch.nn as nn
 from tqdm.auto import tqdm
 import torch.optim as optim
 
+
 from model import res34
-from utils import save_model, save_plots  
+from utils import save_model, save_acc, save_matrix
 from datasets import train_loader, valid_loader, dataset_valid
+
 
 
 # construct the argument parser.
@@ -17,7 +19,7 @@ args = vars(parser.parse_args())
 epochs = args['epochs']
 class_weights = torch.tensor([3.858, 6.622])
 
-lr = 0.0001
+lr = 0.001
 device = ('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"\nComputation device: {device}")
 
@@ -115,6 +117,8 @@ def validate(model, testloader, criterion, class_names):
     valid_running_loss = 0.0
     valid_running_correct = 0
     counter = 0
+    all_preds = []
+    all_labels = []
 
     # 2 lists required to keep track of class-wise accuracy.
     class_correct = list(0. for i in range(len(class_names)))  
@@ -136,6 +140,8 @@ def validate(model, testloader, criterion, class_names):
 
             # calculate the accuracy for each class.
             # correct = (preds == labels).squeeze()
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
             correct = (preds == labels)
             # print(f'Batch No.{counter}:\nBatch prediction and label: ' + str(preds) + '\t' + str(labels))
             # print(f"\nIs prediction satisfies label:{correct}\n")
@@ -155,30 +161,39 @@ def validate(model, testloader, criterion, class_names):
         print(f"Validation accuracy of class {class_names[j]}: {100 * class_correct[j] / class_total[j]}")
     print('\n')
 
-    return epoch_loss, epoch_acc
+    return epoch_loss, epoch_acc, all_labels, all_preds
 
 
 # lists to keep track of losses and accuracies  
 train_loss, valid_loss = [], []
 train_acc, valid_acc = [], []
 
-# training. 
+# training.
+best_val_acc = 0
+final_labels = None
+final_preds = None
 for epoch in range(epochs):  
     print(f"[INFO]: Epoch {epoch+1} of {epochs}]")  
     train_epoch_loss, train_epoch_acc = train(model, train_loader,  
                                              optimizer, criterion)  
-    valid_epoch_loss, valid_epoch_acc = validate(model, valid_loader,  
+    valid_epoch_loss, valid_epoch_acc, epoch_labels, epoch_preds = validate(model, valid_loader,  
                                                  criterion, ['high', 'low'])
 
     train_loss.append(train_epoch_loss)  
     valid_loss.append(valid_epoch_loss)  
     train_acc.append(train_epoch_acc)  
-    valid_acc.append(valid_epoch_acc)  
+    valid_acc.append(valid_epoch_acc)
+
+    if valid_epoch_acc > best_val_acc:
+        best_val_acc = valid_epoch_acc
+        final_labels = epoch_labels
+        final_preds = epoch_preds
 
     print(f"Training loss: {train_epoch_loss:.3f}, training acc: {train_epoch_acc:.3f}")  
     print(f"Validation loss: {valid_epoch_loss:.3f}, validation acc: {valid_epoch_acc:.3f}")  
-    print("-" * 100)  
-  
+    print("-" * 100)
+
 save_model(epochs, model, optimizer, criterion)
-save_plots(train_acc, valid_acc, train_loss, valid_loss)  
+save_acc(train_acc, valid_acc, train_loss, valid_loss)
+save_matrix(final_labels, final_preds, class_names=['high', 'low'])
 print('TRAINING COMPLETE!')
