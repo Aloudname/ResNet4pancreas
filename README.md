@@ -1,2 +1,2 @@
 # ResNet4pancreas(More than ResNet)
-拾人牙慧〒▽〒
+计划加入FCN和KAN
