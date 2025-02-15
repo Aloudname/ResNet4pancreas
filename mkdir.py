@@ -1,3 +1,7 @@
+"""
+Run once ONLY when create a dataset.
+"""
+
 import os
 import random
 import shutil
