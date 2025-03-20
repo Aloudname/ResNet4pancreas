@@ -48,4 +48,4 @@ def split_dataset(root_dir):
             shutil.move(src, dst)
 
 if __name__ == '__main__':
-    split_dataset("C:/Users/34739/Desktop/COVID-19_Radiography_Dataset")
+    split_dataset("main_path/COVID-19_Radiography_Dataset")
