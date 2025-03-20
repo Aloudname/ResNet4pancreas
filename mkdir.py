@@ -1,42 +1,51 @@
-"""
-Run once ONLY when create a dataset.
-"""
-
 import os
 import random
 import shutil
 
-def create_sample_folders(base_dir):
+def split_dataset(root_dir):
+    """
+    Only used when split the dataset.
+    """
+    for subdir_name in os.listdir(root_dir):
+        subdir_path = os.path.join(root_dir, subdir_name)
+        
+        # skip the file in other types.
+        if not os.path.isdir(subdir_path) or subdir_name.startswith('.'):
+            continue
 
-    high_dir = os.path.join(base_dir, 'high')
-    low_dir = os.path.join(base_dir, 'low')
-    a_dir = os.path.join(base_dir, 'a')
-    b_dir = os.path.join(base_dir, 'b')
-    c_dir = os.path.join(base_dir, 'c')
-    d_dir = os.path.join(base_dir, 'd')
+        png_files = []
+        for file_name in os.listdir(subdir_path):
+            file_path = os.path.join(subdir_path, file_name)
+            if os.path.isfile(file_path) and file_name.lower().endswith('.png'):
+                png_files.append(file_name)
+        if not png_files:
+            continue
 
-    os.makedirs(a_dir, exist_ok=True)
-    os.makedirs(b_dir, exist_ok=True)
-    os.makedirs(c_dir, exist_ok=True)
-    os.makedirs(d_dir, exist_ok=True)
+        random.shuffle(png_files)
+        
 
-    high_files = os.listdir(high_dir)
-    low_files = os.listdir(low_dir)
+        split_idx = int(len(png_files) * 64 / (64 + 16))
+        train_files = png_files[:split_idx]
+        test_files = png_files[split_idx:]
+        
+        train_dir = os.path.join(subdir_path, 'train')
+        test_dir = os.path.join(subdir_path, 'test')
+        for folder in [train_dir, test_dir]:
+            if os.path.exists(folder):
+                shutil.rmtree(folder)
+        
+        os.makedirs(train_dir, exist_ok=True)
+        os.makedirs(test_dir, exist_ok=True)
 
-    high_sample = random.sample(high_files, 5298)
-    high_rest = set(high_files) - set(high_sample)
+        for file_name in train_files:
+            src = os.path.join(subdir_path, file_name)
+            dst = os.path.join(train_dir, file_name)
+            shutil.move(src, dst)
 
-    low_sample = random.sample(low_files, 3086)
-    low_rest = set(low_files) - set(low_sample)
+        for file_name in test_files:
+            src = os.path.join(subdir_path, file_name)
+            dst = os.path.join(test_dir, file_name)
+            shutil.move(src, dst)
 
-    for file in high_sample:
-        shutil.move(os.path.join(high_dir, file), os.path.join(a_dir, file))
-    for file in high_rest:
-        shutil.move(os.path.join(high_dir, file), os.path.join(c_dir, file))
-    for file in low_sample:
-        shutil.move(os.path.join(low_dir, file), os.path.join(b_dir, file))
-    for file in low_rest:
-        shutil.move(os.path.join(low_dir, file), os.path.join(d_dir, file))
-
-base = 'all_JPG'
-create_sample_folders(base)
+if __name__ == '__main__':
+    split_dataset("C:/Users/34739/Desktop/COVID-19_Radiography_Dataset")
